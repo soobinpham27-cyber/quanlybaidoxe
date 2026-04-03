@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>HỆ THỐNG TRUNG TÂM BÃI ĐỖ XE</title>
+    <style>
+        body { font-family: Arial; text-align: center; background: #eef2f3; margin: 0; padding: 20px;}
+        .container { display: flex; justify-content: space-between; gap: 20px; }
+        .box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); flex: 1; }
+        
+        .grid { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .slot { width: 60px; height: 60px; font-size: 20px; font-weight: bold; line-height: 60px; color: white; border-radius: 10px; }
+        .trong { background-color: #4CAF50; } 
+        .co-xe { background-color: #f44336; } 
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #007BFF; color: white; }
+        .stats { display: flex; justify-content: space-around; font-weight: bold; font-size: 18px; color: #333; background: #ffe082; padding: 10px; border-radius: 5px; margin-bottom: 15px;}
+        
+        .log { text-align: left; background: #333; color: #0f0; padding: 10px; height: 150px; overflow-y: scroll; font-family: monospace; font-size: 13px; border-radius: 5px;}
+        .auto-badge { background: #e91e63; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; vertical-align: middle; margin-left: 10px; animation: blink 1.5s infinite;}
+        @keyframes blink { 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+    <h2>HỆ THỐNG TRUNG TÂM QUẢN LÝ BÃI ĐỖ XE</h2>
+
+    <div class="container">
+        <div class="box">
+            <h3 style="color: #ff9800;">1. MÀN HÌNH GIÁM SÁT REALTIME</h3>
+            <p style="color:red; font-weight:bold;">Yêu cầu đang chờ: <span id="so-luong">0</span> <span class="auto-badge">Auto Consumer Active</span></p>
+            
+            <div class="log" id="log-box">
+                > Hệ thống giám sát tự động đang chạy...<br>
+                > Backend Node.js đang âm thầm xử lý phía sau!<br>
+            </div>
+            
+            <div class="grid" id="map">Đang tải sơ đồ...</div>
+
+            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 15px; text-align: left;">
+                <b style="color: #0056b3;">🔍 TRA CỨU NHANH TRẠNG THÁI Ô ĐỖ:</b><br>
+                <input type="number" id="admin-tra-cuu" placeholder="Nhập số ô..." style="padding: 5px; width: 120px; border-radius: 3px; border: 1px solid #ccc;">
+                <button onclick="adminTraCuu()" style="padding: 6px 15px; background: #007BFF; color: white; border: none; border-radius: 3px; cursor: pointer;">Kiểm tra</button>
+                <p id="admin-kq-tra-cuu" style="font-weight: bold; margin-top: 5px; font-size: 14px;"></p>
+            </div>
+        </div>
+
+        <div class="box">
+            <h3 style="color: #007BFF;">2. MODULE BÁO CÁO (MySQL)</h3>
+            
+            <div style="background: #f1f8ff; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #cce5ff; text-align: left; font-size: 14px;">
+                <b style="color: #004085;">🔍 BỘ LỌC TÌM KIẾM LỊCH SỬ:</b><br><br>
+                Hành động: 
+                <select id="filter-hanh-dong" style="padding: 5px; margin-right: 15px;">
+                    <option value="ALL">Tất cả</option>
+                    <option value="VAO">Chỉ xe VÀO</option>
+                    <option value="RA">Chỉ xe RA</option>
+                </select>
+                Vị trí: 
+                <input type="number" id="filter-vi-tri" placeholder="Nhập số ô" style="padding: 5px; width: 100px; margin-right: 15px;">
+                <br><br>
+                Từ lúc: <input type="datetime-local" id="filter-tu-ngay" style="padding: 5px; margin-right: 15px;">
+                Đến lúc: <input type="datetime-local" id="filter-den-ngay" style="padding: 5px;">
+                <br><br>
+                <button id="btn-tra-cuu" style="padding: 8px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Lọc Dữ Liệu</button>
+                <button id="btn-xoa-loc" style="padding: 8px 15px; background: #6c757d; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Xóa Bộ Lọc</button>
+            </div>
+
+            <div class="stats">
+                <span>Tổng lượt VÀO: <span id="tong-vao" style="color:green">0</span></span>
+                <span>Tổng lượt RA: <span id="tong-ra" style="color:red">0</span></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã Giao Dịch</th>
+                        <th>Hành Động</th>
+                        <th>Vị Trí Đỗ</th>
+                        <th>Thời Gian Chuẩn</th>
+                    </tr>
+                </thead>
+                <tbody id="bang-du-lieu"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGcUAYvghGvFFWLGZu7nHZqt2WUKYPpbc",
+            authDomain: "baidoxe-d4e47.firebaseapp.com",
+            databaseURL: "https://baidoxe-d4e47-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "baidoxe-d4e47"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const ghiLog = (txt) => {
+            const logBox = document.getElementById('log-box');
+            logBox.innerHTML += `> ${txt}<br>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        };
+
+        onValue(ref(db, 'thong_bao_log'), (snap) => {
+            if (snap.exists()) ghiLog(snap.val());
+        });
+
+        let duLieuBaiAdmin = {};
+        const baiRef = ref(db, 'thong_tin_bai/danh_sach_cho');
+        onValue(baiRef, (snap) => {
+            if (!snap.exists()) {
+                set(baiRef, { "1": true, "2": true, "3": true, "4": true, "5": true });
+            } else {
+                duLieuBaiAdmin = snap.val();
+                let html = '';
+                ["1", "2", "3", "4", "5"].forEach(key => {
+                    html += `<div class="slot ${duLieuBaiAdmin[key] ? 'trong' : 'co-xe'}">${key}</div>`;
+                });
+                document.getElementById('map').innerHTML = html;
+            }
+        });
+
+        window.adminTraCuu = () => {
+            const viTri = document.getElementById('admin-tra-cuu').value;
+            const kqBox = document.getElementById('admin-kq-tra-cuu');
+            if (!viTri) { kqBox.innerText = "Vui lòng nhập số ô!"; return; }
+            if (duLieuBaiAdmin[viTri] === true) {
+                kqBox.innerText = `✅ Ô số ${viTri} hiện đang TRỐNG.`;
+                kqBox.style.color = "green";
+            } else if (duLieuBaiAdmin[viTri] === false) {
+                kqBox.innerText = `🚗 Ô số ${viTri} ĐANG CÓ XE.`;
+                kqBox.style.color = "red";
+            } else {
+                kqBox.innerText = `⚠️ Ô số ${viTri} không có trong hệ thống!`;
+                kqBox.style.color = "#ff9800";
+            }
+        };
+
+        onValue(ref(db, 'hang_doi'), (snap) => {
+            document.getElementById('so-luong').innerText = snap.exists() ? Object.keys(snap.val()).length : 0;
+        });
+
+        async function loadLichSuMySQL() {
+            try {
+                const hanhDong = document.getElementById('filter-hanh-dong').value;
+                let viTri = document.getElementById('filter-vi-tri').value;
+                if (!viTri) viTri = 'ALL'; 
+                const tuNgay = document.getElementById('filter-tu-ngay').value;
+                const denNgay = document.getElementById('filter-den-ngay').value;
+
+                let url = new URL('http://localhost:3000/api/lichsu');
+                url.searchParams.append('hanh_dong', hanhDong);
+                url.searchParams.append('vi_tri', viTri);
+                if (tuNgay) url.searchParams.append('tu_ngay', tuNgay);
+                if (denNgay) url.searchParams.append('den_ngay', denNgay);
+
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const bang = document.getElementById('bang-du-lieu');
+                bang.innerHTML = ''; 
+                let demVao = 0, demRa = 0;
+
+                data.forEach(row => {
+                    if (row.hanh_dong === 'VAO') demVao++;
+                    if (row.hanh_dong === 'RA') demRa++;
+                    
+                    const dateObj = new Date(row.thoi_gian);
+                    const gio_phut_giay = dateObj.toLocaleTimeString('vi-VN');
+                    const ngay = String(dateObj.getDate()).padStart(2, '0');
+                    const thang = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const nam = dateObj.getFullYear();
+                    const timeString = `${gio_phut_giay} | ${ngay}/${thang}/${nam}`;
+
+                    bang.innerHTML += `
+                        <tr>
+                            <td style="font-family:monospace; font-size:12px;">${row.ma_giao_dich.substring(0,8)}...</td>
+                            <td style="font-weight:bold; color:${row.hanh_dong==='VAO'?'green':'red'}">${row.hanh_dong}</td>
+                            <td>Ô số ${row.vi_tri}</td>
+                            <td>${timeString}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('tong-vao').innerText = demVao;
+                document.getElementById('tong-ra').innerText = demRa;
+            } catch (error) {}
+        }
+
+        document.getElementById('btn-tra-cuu').addEventListener('click', loadLichSuMySQL);
+        document.getElementById('btn-xoa-loc').addEventListener('click', () => {
+            document.getElementById('filter-hanh-dong').value = 'ALL';
+            document.getElementById('filter-vi-tri').value = '';
+            document.getElementById('filter-tu-ngay').value = '';
+            document.getElementById('filter-den-ngay').value = '';
+            loadLichSuMySQL(); 
+        });
+
+        loadLichSuMySQL();
+        setInterval(loadLichSuMySQL, 2000);
+    </script>
+</body>
+</html>

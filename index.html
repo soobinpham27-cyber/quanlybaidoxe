@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CỔNG BÃI XE - CẬP NHẬT REALTIME</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 20px; background: #f4f4f9; }
+        .box { display: inline-block; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: 450px; }
+        
+        .mini-grid { display: flex; justify-content: center; gap: 10px; margin: 15px 0; padding: 10px; background: #eee; border-radius: 8px; }
+        .mini-slot { width: 50px; height: 50px; line-height: 50px; color: white; font-weight: bold; border-radius: 5px; font-size: 14px; }
+        .trong { background-color: #4CAF50; } 
+        .co-xe { background-color: #f44336; } 
+
+        button, input { padding: 10px; font-size: 16px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        button { cursor: pointer; border: none; font-weight: bold; }
+        .btn-vao { background: #4CAF50; color: white; width: 80%; }
+        .btn-ra { background: #f44336; color: white; width: 80%; }
+        .btn-tra-cuu { background: #007BFF; color: white; }
+        hr { margin: 15px 0; border: 0; border-top: 1px solid #ccc; }
+        
+        .log-box { background: #333; color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 13px; text-align: left; min-height: 40px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>MÀN HÌNH TẠI CỔNG</h2>
+        
+        <p style="font-weight: bold; margin-bottom: 5px;">Tình trạng sơ đồ hiện tại:</p>
+        <div class="mini-grid" id="mini-map">Đang tải...</div>
+
+        <div style="background: #e3f2fd; padding: 10px; border-radius: 5px;">
+            <b style="color: #0056b3;">🔍 TRA CỨU TRẠNG THÁI Ô:</b><br>
+            <input type="number" id="input-tra-cuu" placeholder="Nhập số ô (VD: 3)" style="width: 150px;">
+            <button class="btn-tra-cuu" onclick="traCuuO()">Kiểm tra</button>
+            <p id="kq-tra-cuu" style="font-weight: bold; color: #d81b60; margin-top: 5px;"></p>
+        </div>
+
+        <hr>
+        
+        <button class="btn-vao" onclick="guiYeuCauVao()">1. CÓ XE MUỐN VÀO BÃI</button>
+        
+        <hr>
+        <label>Xe ở vị trí nào muốn ra?</label><br>
+        <input type="number" id="chon-vi-tri-ra" placeholder="Nhập số ô (VD: 5)" style="width: 60%;"><br>
+        <button class="btn-ra" onclick="guiYeuCauRa()">2. BÁO CÁO XE RA</button>
+
+        <hr>
+        <p style="font-weight: bold; margin-bottom: 5px; text-align: left;">📬 Thông báo từ Server:</p>
+        <div class="log-box" id="thong-bao-server">Hệ thống sẵn sàng...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGcUAYvghGvFFWLGZu7nHZqt2WUKYPpbc",
+            authDomain: "baidoxe-d4e47.firebaseapp.com",
+            databaseURL: "https://baidoxe-d4e47-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "baidoxe-d4e47",
+            storageBucket: "baidoxe-d4e47.firebasestorage.app",
+            messagingSenderId: "677667006665",
+            appId: "1:677667006665:web:88dccfba3907294b760518"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let duLieuBaiXe = {};
+
+        // Lắng nghe sơ đồ
+        const baiRef = ref(db, 'thong_tin_bai/danh_sach_cho');
+        onValue(baiRef, (snap) => {
+            if (snap.exists()) {
+                duLieuBaiXe = snap.val();
+                let html = '';
+                ["1", "2", "3", "4", "5"].forEach(key => {
+                    html += `<div class="mini-slot ${duLieuBaiXe[key] ? 'trong' : 'co-xe'}">${key}</div>`;
+                });
+                document.getElementById('mini-map').innerHTML = html;
+            }
+        });
+
+        // Hàm tra cứu
+        window.traCuuO = () => {
+            const viTri = document.getElementById('input-tra-cuu').value;
+            const kqBox = document.getElementById('kq-tra-cuu');
+            if (!viTri) { kqBox.innerText = "Vui lòng nhập số ô!"; return; }
+            if (duLieuBaiXe[viTri] === true) {
+                kqBox.innerText = `✅ Ô số ${viTri} đang TRỐNG, có thể vào.`;
+                kqBox.style.color = "green";
+            } else if (duLieuBaiXe[viTri] === false) {
+                kqBox.innerText = `🚗 Ô số ${viTri} ĐÃ CÓ XE!`;
+                kqBox.style.color = "red";
+            } else {
+                kqBox.innerText = `⚠️ Ô số ${viTri} không tồn tại!`;
+                kqBox.style.color = "#ff9800";
+            }
+        };
+
+        // Nhận thông báo 2 chiều từ server
+        onValue(ref(db, 'thong_bao_log'), (snap) => {
+            if (snap.exists()) {
+                document.getElementById('thong-bao-server').innerHTML = snap.val();
+            }
+        });
+
+        window.guiYeuCauVao = async () => {
+            document.getElementById('thong-bao-server').innerHTML = "<i>Đang xin VÀO... chờ Server xếp chỗ.</i>";
+            await push(ref(db, 'hang_doi'), { hanh_dong: "VAO", vi_tri: "AUTO", thoi_gian: serverTimestamp() });
+        };
+
+        window.guiYeuCauRa = async () => {
+            const vitri = document.getElementById('chon-vi-tri-ra').value;
+            if (!vitri) { alert("Nhập số vị trí xe muốn ra!"); return; }
+            document.getElementById('thong-bao-server').innerHTML = `<i>Đang xin RA cho ô số ${vitri}...</i>`;
+            await push(ref(db, 'hang_doi'), { hanh_dong: "RA", vi_tri: vitri, thoi_gian: serverTimestamp() });
+            document.getElementById('chon-vi-tri-ra').value = ''; 
+        };
+    </script>
+</body>
+</html>
