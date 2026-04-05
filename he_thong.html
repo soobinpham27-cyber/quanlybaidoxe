@@ -2,74 +2,98 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>HỆ THỐNG TRUNG TÂM BÃI ĐỖ XE</title>
+    <title>HỆ THỐNG TRUNG TÂM BÃI ĐỖ XE - ADMIN DASHBOARD</title>
     <style>
         body { font-family: Arial; text-align: center; background: #eef2f3; margin: 0; padding: 20px;}
         .container { display: flex; justify-content: space-between; gap: 20px; }
-        .box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); flex: 1; }
+        .box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); flex: 1; }
         
-        .grid { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
-        .slot { width: 60px; height: 60px; font-size: 20px; font-weight: bold; line-height: 60px; color: white; border-radius: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 12px; margin: 15px 0; padding: 20px; background: #f8f9fa; border: 2px dashed #ccc; border-radius: 8px; max-height: 400px; overflow-y: auto; }
+        .slot { height: 60px; font-size: 18px; font-weight: bold; line-height: 60px; color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s;}
+        .slot:hover { transform: scale(1.05); cursor: pointer; }
         .trong { background-color: #4CAF50; } 
         .co-xe { background-color: #f44336; } 
+
+        .admin-stats-bar { display: flex; justify-content: space-between; background: #fff3e0; padding: 15px 20px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; border: 1px solid #ffe0b2; }
+
+        .filter-container { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-left: 5px; }
+        .filter-btn { padding: 8px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; border: 1px solid #ccc; background: white; color: #333; font-size: 14px;}
+        .filter-btn:hover { background: #f0f0f0; }
+        .filter-btn.active-all { border-color: #999; background: #e0e0e0; }
+        .filter-btn.active-trong { background: #4CAF50; color: white; border: none; }
+        .filter-btn.active-day { background: #f44336; color: white; border: none; }
+        .search-input { padding: 8px; border: 1px solid #ccc; border-radius: 5px; width: 130px; text-align: center; font-size: 14px; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #007BFF; color: white; }
-        .stats { display: flex; justify-content: space-around; font-weight: bold; font-size: 18px; color: #333; background: #ffe082; padding: 10px; border-radius: 5px; margin-bottom: 15px;}
+        .stats { display: flex; justify-content: space-around; font-weight: bold; font-size: 18px; color: #333; background: #e3f2fd; padding: 12px; border-radius: 8px; margin-bottom: 15px;}
         
-        .log { text-align: left; background: #333; color: #0f0; padding: 10px; height: 150px; overflow-y: scroll; font-family: monospace; font-size: 13px; border-radius: 5px;}
-        .auto-badge { background: #e91e63; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; vertical-align: middle; margin-left: 10px; animation: blink 1.5s infinite;}
+        .pagination { display: flex; justify-content: center; align-items: center; margin-top: 15px; gap: 15px; }
+        .btn-page { padding: 8px 15px; background: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-page:disabled { background: #ccc; cursor: not-allowed; }
+        #page-info { font-weight: bold; color: #333; }
+
+        .log { text-align: left; background: #263238; color: #69f0ae; padding: 12px; height: 130px; overflow-y: auto; font-family: monospace; font-size: 14px; border-radius: 8px;}
+        .auto-badge { background: #e91e63; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; vertical-align: middle; margin-left: 10px; animation: blink 1.5s infinite;}
         @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
-    <h2>HỆ THỐNG TRUNG TÂM QUẢN LÝ BÃI ĐỖ XE</h2>
+    <h2 style="color: #333; margin-top: 0;">HỆ THỐNG TRUNG TÂM QUẢN LÝ BÃI ĐỖ XE</h2>
 
     <div class="container">
         <div class="box">
-            <h3 style="color: #ff9800;">1. MÀN HÌNH GIÁM SÁT REALTIME</h3>
+            <h3 style="color: #ff9800; margin-top: 0;">1. MÀN HÌNH GIÁM SÁT REALTIME</h3>
             <p style="color:red; font-weight:bold;">Yêu cầu đang chờ: <span id="so-luong">0</span> <span class="auto-badge">Auto Consumer Active</span></p>
             
             <div class="log" id="log-box">
-                > Hệ thống giám sát tự động đang chạy...<br>
-                > Backend Node.js đang âm thầm xử lý phía sau!<br>
+                > Hệ thống Core giám sát tự động đang chạy...<br>
             </div>
             
-            <div class="grid" id="map">Đang tải sơ đồ...</div>
-
-            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 15px; text-align: left;">
-                <b style="color: #0056b3;">🔍 TRA CỨU NHANH TRẠNG THÁI Ô ĐỖ:</b><br>
-                <input type="number" id="admin-tra-cuu" placeholder="Nhập số ô..." style="padding: 5px; width: 120px; border-radius: 3px; border: 1px solid #ccc;">
-                <button onclick="adminTraCuu()" style="padding: 6px 15px; background: #007BFF; color: white; border: none; border-radius: 3px; cursor: pointer;">Kiểm tra</button>
-                <p id="admin-kq-tra-cuu" style="font-weight: bold; margin-top: 5px; font-size: 14px;"></p>
+            <div class="admin-stats-bar">
+                <span style="color: #333;">Tổng: <span id="tong-cho" style="font-size: 22px;">0</span></span>
+                <span style="color: #d32f2f;">Đang đỗ: <span id="so-xe-dang-do" style="font-size: 22px;">0</span></span>
+                <span style="color: #2e7d32;">Còn trống: <span id="so-xe-trong" style="font-size: 22px;">0</span></span>
             </div>
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+            <div class="filter-container">
+                <b style="color: #555;">Hiển thị sơ đồ:</b>
+                <button id="btn-filter-all" onclick="locSoDo('ALL')" class="filter-btn active-all">Tất Cả</button>
+                <button id="btn-filter-trong" onclick="locSoDo('TRONG')" class="filter-btn">Ô Trống</button>
+                <button id="btn-filter-day" onclick="locSoDo('DAY')" class="filter-btn">Có Xe</button>
+                <span style="color: #ccc; font-weight: bold;">|</span>
+                <input type="text" id="search-slot-admin" class="search-input" placeholder="🔍 Tìm ô số..." oninput="timORealtimeAdmin()">
+            </div>
+
+            <div class="grid" id="map">Đang tải sơ đồ...</div>
         </div>
 
         <div class="box">
-            <h3 style="color: #007BFF;">2. MODULE BÁO CÁO (MySQL)</h3>
+            <h3 style="color: #007BFF; margin-top: 0;">2. MODULE BÁO CÁO (MySQL)</h3>
             
-            <div style="background: #f1f8ff; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #cce5ff; text-align: left; font-size: 14px;">
+            <div style="background: #f1f8ff; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cce5ff; text-align: left; font-size: 14px;">
                 <b style="color: #004085;">🔍 BỘ LỌC TÌM KIẾM LỊCH SỬ:</b><br><br>
                 Hành động: 
-                <select id="filter-hanh-dong" style="padding: 5px; margin-right: 15px;">
+                <select id="filter-hanh-dong" style="padding: 6px; margin-right: 10px;">
                     <option value="ALL">Tất cả</option>
                     <option value="VAO">Chỉ xe VÀO</option>
                     <option value="RA">Chỉ xe RA</option>
                 </select>
                 Vị trí: 
-                <input type="number" id="filter-vi-tri" placeholder="Nhập số ô" style="padding: 5px; width: 100px; margin-right: 15px;">
+                <input type="number" id="filter-vi-tri" placeholder="VD: 42" style="padding: 6px; width: 70px; margin-right: 10px;">
+                Từ lúc: <input type="datetime-local" id="filter-tu-ngay" style="padding: 6px; margin-right: 10px;">
                 <br><br>
-                Từ lúc: <input type="datetime-local" id="filter-tu-ngay" style="padding: 5px; margin-right: 15px;">
-                Đến lúc: <input type="datetime-local" id="filter-den-ngay" style="padding: 5px;">
-                <br><br>
-                <button id="btn-tra-cuu" style="padding: 8px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Lọc Dữ Liệu</button>
-                <button id="btn-xoa-loc" style="padding: 8px 15px; background: #6c757d; color: white; border: none; cursor: pointer; border-radius: 3px; font-weight: bold;">Xóa Bộ Lọc</button>
+                Đến lúc: <input type="datetime-local" id="filter-den-ngay" style="padding: 6px; margin-right: 15px;">
+                <button id="btn-tra-cuu" style="padding: 8px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Lọc Dữ Liệu</button>
+                <button id="btn-xoa-loc" style="padding: 8px 15px; background: #6c757d; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Xóa</button>
             </div>
 
             <div class="stats">
-                <span>Tổng lượt VÀO: <span id="tong-vao" style="color:green">0</span></span>
-                <span>Tổng lượt RA: <span id="tong-ra" style="color:red">0</span></span>
+                <span>Tổng lượt VÀO: <span id="tong-vao" style="color:green; font-size: 20px;">0</span></span>
+                <span>Tổng lượt RA: <span id="tong-ra" style="color:red; font-size: 20px;">0</span></span>
             </div>
 
             <table>
@@ -83,12 +107,19 @@
                 </thead>
                 <tbody id="bang-du-lieu"></tbody>
             </table>
+            
+            <div class="pagination">
+                <button id="btn-prev" class="btn-page" onclick="changePage(-1)">Thùi Lại</button>
+                <span id="page-info">Trang 1 / 1</span>
+                <button id="btn-next" class="btn-page" onclick="changePage(1)">Tiếp Theo</button>
+            </div>
+
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBGcUAYvghGvFFWLGZu7nHZqt2WUKYPpbc",
@@ -99,109 +130,151 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const ghiLog = (txt) => {
-            const logBox = document.getElementById('log-box');
-            logBox.innerHTML += `> ${txt}<br>`;
-            logBox.scrollTop = logBox.scrollHeight;
-        };
+        const TONG_SO_CHO = 50; 
+        document.getElementById('tong-cho').innerText = TONG_SO_CHO;
 
         onValue(ref(db, 'thong_bao_log'), (snap) => {
-            if (snap.exists()) ghiLog(snap.val());
-        });
-
-        let duLieuBaiAdmin = {};
-        const baiRef = ref(db, 'thong_tin_bai/danh_sach_cho');
-        onValue(baiRef, (snap) => {
-            if (!snap.exists()) {
-                set(baiRef, { "1": true, "2": true, "3": true, "4": true, "5": true });
-            } else {
-                duLieuBaiAdmin = snap.val();
-                let html = '';
-                ["1", "2", "3", "4", "5"].forEach(key => {
-                    html += `<div class="slot ${duLieuBaiAdmin[key] ? 'trong' : 'co-xe'}">${key}</div>`;
-                });
-                document.getElementById('map').innerHTML = html;
+            if (snap.exists()) {
+                const logBox = document.getElementById('log-box');
+                logBox.innerHTML += `> ${snap.val()}<br>`;
+                logBox.scrollTop = logBox.scrollHeight;
             }
         });
 
-        window.adminTraCuu = () => {
-            const viTri = document.getElementById('admin-tra-cuu').value;
-            const kqBox = document.getElementById('admin-kq-tra-cuu');
-            if (!viTri) { kqBox.innerText = "Vui lòng nhập số ô!"; return; }
-            if (duLieuBaiAdmin[viTri] === true) {
-                kqBox.innerText = `✅ Ô số ${viTri} hiện đang TRỐNG.`;
-                kqBox.style.color = "green";
-            } else if (duLieuBaiAdmin[viTri] === false) {
-                kqBox.innerText = `🚗 Ô số ${viTri} ĐANG CÓ XE.`;
-                kqBox.style.color = "red";
-            } else {
-                kqBox.innerText = `⚠️ Ô số ${viTri} không có trong hệ thống!`;
-                kqBox.style.color = "#ff9800";
+        let currentFilter = 'ALL';
+        onValue(ref(db, 'thong_tin_bai/danh_sach_cho'), (snap) => {
+            const duLieu = snap.val() || {};
+            let html = '', demXe = 0;
+            for (let i = 1; i <= TONG_SO_CHO; i++) {
+                const trangThai = duLieu[i] !== false;
+                if (!trangThai) demXe++; 
+                html += `<div class="slot ${trangThai ? 'trong' : 'co-xe'}">${i}</div>`;
             }
-        };
+            document.getElementById('so-xe-dang-do').innerText = demXe;
+            document.getElementById('so-xe-trong').innerText = TONG_SO_CHO - demXe;
+            document.getElementById('map').innerHTML = html;
+            reApplyFilter(); // Giữ filter
+        });
 
         onValue(ref(db, 'hang_doi'), (snap) => {
             document.getElementById('so-luong').innerText = snap.exists() ? Object.keys(snap.val()).length : 0;
         });
 
-        async function loadLichSuMySQL() {
-            try {
-                const hanhDong = document.getElementById('filter-hanh-dong').value;
-                let viTri = document.getElementById('filter-vi-tri').value;
-                if (!viTri) viTri = 'ALL'; 
-                const tuNgay = document.getElementById('filter-tu-ngay').value;
-                const denNgay = document.getElementById('filter-den-ngay').value;
+        window.locSoDo = (loai) => {
+            currentFilter = loai;
+            document.getElementById('search-slot-admin').value = ''; 
+            reApplyFilter();
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-all', 'active-trong', 'active-day'));
+            if (loai === 'ALL') document.getElementById('btn-filter-all').classList.add('active-all');
+            if (loai === 'TRONG') document.getElementById('btn-filter-trong').classList.add('active-trong');
+            if (loai === 'DAY') document.getElementById('btn-filter-day').classList.add('active-day');
+        };
 
-                let url = new URL('http://localhost:3000/api/lichsu');
-                url.searchParams.append('hanh_dong', hanhDong);
-                url.searchParams.append('vi_tri', viTri);
-                if (tuNgay) url.searchParams.append('tu_ngay', tuNgay);
-                if (denNgay) url.searchParams.append('den_ngay', denNgay);
+        function reApplyFilter() {
+            document.querySelectorAll('.slot').forEach(o => {
+                if (currentFilter === 'ALL') o.style.display = 'block';
+                else if (currentFilter === 'TRONG') o.style.display = o.classList.contains('trong') ? 'block' : 'none';
+                else if (currentFilter === 'DAY') o.style.display = o.classList.contains('co-xe') ? 'block' : 'none';
+            });
+        }
+
+        window.timORealtimeAdmin = () => {
+            const val = document.getElementById('search-slot-admin').value.trim();
+            if (val === '') {
+                reApplyFilter();
+                return;
+            }
+            document.querySelectorAll('.slot').forEach(o => {
+                if (o.innerText.includes(val)) {
+                    o.style.display = 'block';
+                } else {
+                    o.style.display = 'none';
+                }
+            });
+        };
+
+        let lichSuData = []; 
+        let currentPage = 1;
+        const rowsPerPage = 10; 
+
+        async function loadLichSuMySQL(isManualClick = false) {
+            try {
+                const hd = document.getElementById('filter-hanh-dong').value;
+                let vt = document.getElementById('filter-vi-tri').value;
+                const tu = document.getElementById('filter-tu-ngay').value;
+                const den = document.getElementById('filter-den-ngay').value;
+
+                // --- CẬP NHẬT ĐƯỜNG DẪN RENDER TẠI ĐÂY ---
+                let url = new URL('https://quanlybaidoxe.onrender.com/api/lichsu');
+                url.searchParams.append('hanh_dong', hd);
+                if(vt) url.searchParams.append('vi_tri', vt);
+                if(tu) url.searchParams.append('tu_ngay', tu);
+                if(den) url.searchParams.append('den_ngay', den);
 
                 const response = await fetch(url);
-                const data = await response.json();
+                lichSuData = await response.json(); 
                 
-                const bang = document.getElementById('bang-du-lieu');
-                bang.innerHTML = ''; 
                 let demVao = 0, demRa = 0;
-
-                data.forEach(row => {
+                lichSuData.forEach(row => {
                     if (row.hanh_dong === 'VAO') demVao++;
                     if (row.hanh_dong === 'RA') demRa++;
-                    
-                    const dateObj = new Date(row.thoi_gian);
-                    const gio_phut_giay = dateObj.toLocaleTimeString('vi-VN');
-                    const ngay = String(dateObj.getDate()).padStart(2, '0');
-                    const thang = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    const nam = dateObj.getFullYear();
-                    const timeString = `${gio_phut_giay} | ${ngay}/${thang}/${nam}`;
-
-                    bang.innerHTML += `
-                        <tr>
-                            <td style="font-family:monospace; font-size:12px;">${row.ma_giao_dich.substring(0,8)}...</td>
-                            <td style="font-weight:bold; color:${row.hanh_dong==='VAO'?'green':'red'}">${row.hanh_dong}</td>
-                            <td>Ô số ${row.vi_tri}</td>
-                            <td>${timeString}</td>
-                        </tr>
-                    `;
                 });
-
                 document.getElementById('tong-vao').innerText = demVao;
                 document.getElementById('tong-ra').innerText = demRa;
+
+                if (isManualClick) currentPage = 1; 
+                renderTable(); 
             } catch (error) {}
         }
 
-        document.getElementById('btn-tra-cuu').addEventListener('click', loadLichSuMySQL);
+        window.renderTable = () => {
+            const bang = document.getElementById('bang-du-lieu');
+            bang.innerHTML = ''; 
+            
+            const totalPages = Math.ceil(lichSuData.length / rowsPerPage) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            document.getElementById('page-info').innerText = `Trang ${currentPage} / ${totalPages}`;
+
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const currentData = lichSuData.slice(startIndex, endIndex);
+
+            currentData.forEach(row => {
+                const dateObj = new Date(row.thoi_gian);
+                const timeString = `${dateObj.toLocaleTimeString('vi-VN')} | ${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+
+                bang.innerHTML += `
+                    <tr>
+                        <td style="font-family:monospace; font-size:13px;">${row.ma_giao_dich.substring(0,8)}...</td>
+                        <td style="font-weight:bold; color:${row.hanh_dong==='VAO'?'green':'red'}">${row.hanh_dong}</td>
+                        <td style="font-weight:bold;">Ô số ${row.vi_tri}</td>
+                        <td>${timeString}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages;
+        };
+
+        window.changePage = (direction) => {
+            currentPage += direction;
+            renderTable();
+        };
+
+        document.getElementById('btn-tra-cuu').addEventListener('click', () => loadLichSuMySQL(true));
         document.getElementById('btn-xoa-loc').addEventListener('click', () => {
             document.getElementById('filter-hanh-dong').value = 'ALL';
             document.getElementById('filter-vi-tri').value = '';
             document.getElementById('filter-tu-ngay').value = '';
             document.getElementById('filter-den-ngay').value = '';
-            loadLichSuMySQL(); 
+            loadLichSuMySQL(true); 
         });
 
-        loadLichSuMySQL();
-        setInterval(loadLichSuMySQL, 2000);
+        loadLichSuMySQL(true);
+        setInterval(() => loadLichSuMySQL(false), 3000); 
     </script>
 </body>
 </html>
